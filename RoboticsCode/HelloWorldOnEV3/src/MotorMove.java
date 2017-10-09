@@ -1,86 +1,96 @@
+import lejos.hardware.Button;
 import lejos.hardware.motor.EV3MediumRegulatedMotor;
 import lejos.hardware.port.MotorPort;
 import lejos.hardware.port.SensorPort;
 import lejos.hardware.sensor.EV3TouchSensor;
+import lejos.hardware.sensor.EV3UltrasonicSensor;
 import lejos.hardware.sensor.SensorMode;
-import lejos.robotics.RegulatedMotor;
-import lejos.utility.Delay;
 
 public class MotorMove {
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws InterruptedException {
+		
+		
 		//Motors
-		RegulatedMotor mA = new EV3MediumRegulatedMotor(MotorPort.A);
-		RegulatedMotor mB = new EV3MediumRegulatedMotor(MotorPort.B);
-		mA.synchronizeWith(new RegulatedMotor[] { mB });
-
-		//Top button
-		EV3TouchSensor topButton = new EV3TouchSensor(SensorPort.S1);
-
+		
+		EV3MediumRegulatedMotor mA = new EV3MediumRegulatedMotor(MotorPort.A);
+		EV3MediumRegulatedMotor mB = new EV3MediumRegulatedMotor(MotorPort.B);
+		
+		EV3UltrasonicSensor ultra = new EV3UltrasonicSensor(SensorPort.S2);
+		SensorMode distance = ultra.getMode("Distance");		
+		float[] sample = new float[distance.sampleSize()];
+		
 		//Front button
-		EV3TouchSensor frontButton = new EV3TouchSensor(SensorPort.S1);
+		EV3TouchSensor frontButton = new EV3TouchSensor(SensorPort.S3);
 
 		//Sensor Setup
-		SensorMode touch1 = topButton.getTouchMode();
 		SensorMode touch2 = frontButton.getTouchMode();
-		float[] sampleTop = new float[touch1.sampleSize()];
 		float[] sampleFront = new float[touch2.sampleSize()];
 
-		float speed = 500;
+		int speed = 90;
 
 
 		//Do nothing until button press
-		while (sampleTop[0] == 0) { // 0 is unpressed, 1 is pressed
-			// mA.forward();
-			// touch.fetchSample(sample, 0);
-			// // System.out.println(Arrays.toString(sample));
-		}
-		Delay.msDelay(200);
+		Button.ENTER.waitForPress();
+		Thread.sleep(200);
 
 		//Move 1.5 meters and stop
-		float distance = 0;
-		float start = System.currentTimeMillis();
-		float elapsed = 0;
-		while(distance < 150) {
-			elapsed = System.currentTimeMillis() - start;
-		}
+//		float distance = 0;
+//		float start = System.currentTimeMillis();
+//		float elapsed = 0;
+//		elapsed = System.currentTimeMillis() - start;
+		mA.setSpeed(speed);
+		mB.setSpeed(speed);
+		mA.forward();
+		mB.forward();
+		Thread.sleep(25063);
+		mA.stop();
+		mB.stop();
 
 		//Beep
+		lejos.hardware.Sound.beep();
 
 		//Do nothing until button press
-		while (sampleTop[0] == 0) { // 0 is unpressed, 1 is pressed
-		}
-		Delay.msDelay(200);
+		Button.ENTER.waitForPress();
+		Thread.sleep(200);
 
 		//Move until 45cm from wall
-
+		while ( sample[0] < 45) { // 0 is unpressed, 1 is pressed
+			distance.fetchSample(sample, 0);
+		}
+		Thread.sleep(200);
+		
 		//Beep
+		lejos.hardware.Sound.beep();
 
 		//Do nothing until button press
-		while (sampleTop[0] == 0) { // 0 is unpressed, 1 is pressed
-		}
-		Delay.msDelay(200);
+		Button.ENTER.waitForPress();
+		Thread.sleep(200);
 
 		//Move forward until we hit the wall
 		while (sampleFront[0] == 0) { // 0 is unpressed, 1 is pressed
+			distance.fetchSample(sample, 0);
+			mA.setSpeed(speed);
+			mB.setSpeed(speed);
 			mA.forward();
 			mB.forward();
 		}
-		Delay.msDelay(200);
+		mA.stop();
+		mB.stop();
 
 		//Backup 45cm
-
-		// mA.setSpeed(720);
-		// mB.setSpeed(720);
-		// for (int i = 0; i < motorA.length; i++) {
-		// mA.startSynchronization();
-		// mA.rotateTo(motorA[i]);
-		// mB.rotateTo(motorB[i]);
-		// mA.endSynchronization();
-		// mA.waitComplete();
-		// mB.waitComplete();
-		//
-		// }
+		mA.setSpeed(-1*speed);
+		mB.setSpeed(-1*speed);
+		mA.forward();
+		mB.forward();
+		Thread.sleep(19098);
+		mA.stop();
+		mB.stop();
+		
+		frontButton.close();
+		mA.close();
+		mB.close();
+		ultra.close();
 
 	}
 
